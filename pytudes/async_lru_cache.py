@@ -24,7 +24,8 @@ def async_lru_cache(
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             key = hash((args, tuple(kwargs.items())))
             if key not in cache:
-                update_cache(key, await func(*args, **kwargs))
+                value = await func(*args, **kwargs)
+                update_cache(key, value)
             return cache[key]
 
         return wrapper
@@ -42,7 +43,8 @@ class AsyncLRUCache:
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             key = hash((args, tuple(kwargs.items())))
             if key not in self._cache:
-                self._update_cache(key, await func(*args, **kwargs))
+                value = await func(*args, **kwargs)
+                self._update_cache(key, value)
             return self._cache[key]
 
         return wrapper
