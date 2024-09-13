@@ -23,6 +23,7 @@ def advance(board: set[tuple[int, int]]) -> set[tuple[int, int]]:
     recalc = board | set(it.chain(*map(neighbors, board)))
     for point in recalc:
         count = sum((neigh in board) for neigh in neighbors(point))
+        # TODO: try to use match here?
         if count in [2, 3] and point in board:
             newstate.add(point)
         elif count == 3 and point not in board:
@@ -30,8 +31,8 @@ def advance(board: set[tuple[int, int]]) -> set[tuple[int, int]]:
     return newstate
 
 
-def advance2(board: set[tuple[int, int]]) -> set[tuple[int, int]]:
-    """my take, might be wrong ;)"""
+def advance_counter(board: set[tuple[int, int]]) -> set[tuple[int, int]]:
+    """My take, might be wrong ;)"""
     newstate = set()
     recalc: co.Counter[tuple[int, int]] = co.Counter()
     recalc.update({point: 0 for point in board})  # to make it explicit
@@ -45,19 +46,19 @@ def advance2(board: set[tuple[int, int]]) -> set[tuple[int, int]]:
 
 
 def test_compare():
-    glider1 = set([(0, 0), (1, 0), (2, 0), (0, 1), (1, 2)])
+    glider = set([(0, 0), (1, 0), (2, 0), (0, 1), (1, 2)])
     for _ in range(1000):
-        glider1 = advance(glider1)
+        glider = advance(glider)
 
-    glider2 = set([(0, 0), (1, 0), (2, 0), (0, 1), (1, 2)])
+    glider_counter = set([(0, 0), (1, 0), (2, 0), (0, 1), (1, 2)])
     for _ in range(1000):
-        glider2 = advance2(glider2)
+        glider_counter = advance_counter(glider_counter)
 
-    assert glider1 == glider2
+    assert glider == glider_counter
 
 
 if __name__ == '__main__':
     glider = set([(0, 0), (1, 0), (2, 0), (0, 1), (1, 2)])
     for _ in range(1000):
-        glider = advance2(glider)
+        glider = advance_counter(glider)
     print(glider)
