@@ -1,23 +1,24 @@
-import typing
 import functools
+import typing
 from unittest import mock
+
 import pytest
 
 
-def cached[T, **P](func: typing.Callable[P, T]) -> typing.Callable[P, T]:
-    cache: dict[int, typing.Any] = {}
+def cache[T, **P](func: typing.Callable[P, T]) -> typing.Callable[P, T]:
+    cache_: dict[int, typing.Any] = {}
 
     @functools.wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
         key = hash((args, tuple(kwargs.items())))
-        if key not in cache:
-            cache[key] = func(*args, **kwargs)
-        return cache[key]
+        if key not in cache_:
+            cache_[key] = func(*args, **kwargs)
+        return cache_[key]
 
     return wrapper
 
 
-class Cached[T, **P]:
+class Cache[T, **P]:
     def __init__(self, func: typing.Callable[P, T]) -> None:
         self._cache: dict[int, typing.Any] = {}
         self._func = func
@@ -30,13 +31,13 @@ class Cached[T, **P]:
         return self._cache[key]
 
 
-@pytest.mark.parametrize("cached", [cached, Cached])
-def test_lru_cached(cached):
+@pytest.mark.parametrize("cache", [cache, Cache])
+def test_lru_cached(cache):
     def f(n: int) -> int:
         return n
 
     mocked = mock.Mock(wraps=f)
-    f = cached(mocked)
+    f = cache(mocked)
 
     assert f(1) == 1
     assert f(2) == 2
@@ -50,7 +51,7 @@ def test_lru_cached(cached):
     assert mocked.call_count == 4
 
 
-@Cached
+@Cache
 def f(n: int) -> int:
     print("f is called")
     return n
