@@ -9,8 +9,13 @@ AsyncFuncT = typing.Callable[P, typing.Awaitable[T]]
 
 
 def async_lru_cache(
+    func: AsyncFuncT | None = None,
+    *,
     maxsize: int,
 ) -> typing.Callable[[AsyncFuncT], AsyncFuncT]:
+    if func is None:
+        return functools.partial(async_lru_cache, maxsize=maxsize)
+
     cache: typing.OrderedDict[int, typing.Any] = collections.OrderedDict()
 
     def update_cache(key: int, value: typing.Any) -> None:
@@ -19,18 +24,15 @@ def async_lru_cache(
         if len(cache) > maxsize:
             cache.popitem()
 
-    def decorator(func: AsyncFuncT) -> AsyncFuncT:
-        @functools.wraps(func)
-        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-            key = hash((args, tuple(kwargs.items())))
-            if key not in cache:
-                value = await func(*args, **kwargs)
-                update_cache(key, value)
-            return cache[key]
+    @functools.wraps(func)
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+        key = hash((args, tuple(kwargs.items())))
+        if key not in cache:
+            value = await func(*args, **kwargs)
+            update_cache(key, value)
+        return cache[key]
 
-        return wrapper
-
-    return decorator
+    return wrapper
 
 
 class AsyncLRUCache:
