@@ -4,18 +4,17 @@ import typing
 import functools
 from unittest import mock
 
-P = typing.ParamSpec("P")
-T = typing.TypeVar("T")
-
 
 class AsyncLRUCache:
     def __init__(self, maxsize: int) -> None:
         self._maxsize = maxsize
         self._cache: typing.OrderedDict[int, typing.Any] = collections.OrderedDict()
 
-    def __call__(
-        self, func: typing.Callable[P, typing.Awaitable[T]]
-    ) -> typing.Callable[P, typing.Awaitable[T]]:
+    def __call__[
+        T, **P
+    ](self, func: typing.Callable[P, typing.Awaitable[T]]) -> typing.Callable[
+        P, typing.Awaitable[T]
+    ]:
         @functools.wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             key = hash((args, tuple(kwargs.items())))
@@ -44,12 +43,13 @@ async def test_async_lru_cache():
     assert await f(2) == 2
     assert await f(3) == 3
     assert mocked.call_count == 3
-    assert await f(1) == 1
     assert await f(4) == 4
-    assert mocked.call_count == 4
-    assert await f(2) == 2
+    assert await f(1) == 1
+    assert mocked.call_count == 5
     assert await f(3) == 3
-    assert mocked.call_count == 4
+    assert mocked.call_count == 5
+    assert await f(1) == 1
+    assert mocked.call_count == 5
 
 
 @AsyncLRUCache(maxsize=3)
