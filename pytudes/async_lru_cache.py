@@ -2,37 +2,10 @@ import asyncio
 import collections
 import typing
 import functools
+from unittest import mock
 
 P = typing.ParamSpec("P")
 T = typing.TypeVar("T")
-AsyncFuncT = typing.Callable[P, typing.Awaitable[T]]
-
-
-def async_lru_cache(
-    func: AsyncFuncT | None = None,
-    *,
-    maxsize: int,
-) -> typing.Callable[[AsyncFuncT], AsyncFuncT]:
-    if func is None:
-        return functools.partial(async_lru_cache, maxsize=maxsize)
-
-    cache: typing.OrderedDict[int, typing.Any] = collections.OrderedDict()
-
-    def update_cache(key: int, value: typing.Any) -> None:
-        cache[key] = value
-        cache.move_to_end(key, last=False)
-        if len(cache) > maxsize:
-            cache.popitem()
-
-    @functools.wraps(func)
-    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-        key = hash((args, tuple(kwargs.items())))
-        if key not in cache:
-            value = await func(*args, **kwargs)
-            update_cache(key, value)
-        return cache[key]
-
-    return wrapper
 
 
 class AsyncLRUCache:
@@ -40,7 +13,9 @@ class AsyncLRUCache:
         self._maxsize = maxsize
         self._cache: typing.OrderedDict[int, typing.Any] = collections.OrderedDict()
 
-    def __call__(self, func: AsyncFuncT) -> AsyncFuncT:
+    def __call__(
+        self, func: typing.Callable[P, typing.Awaitable[T]]
+    ) -> typing.Callable[P, typing.Awaitable[T]]:
         @functools.wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             key = hash((args, tuple(kwargs.items())))
@@ -58,7 +33,26 @@ class AsyncLRUCache:
             self._cache.popitem()
 
 
-@async_lru_cache(maxsize=3)
+async def test_async_lru_cache():
+    async def f(n: int) -> int:
+        return n
+
+    mocked = mock.AsyncMock(wraps=f)
+    f = AsyncLRUCache(maxsize=3)(mocked)
+
+    assert await f(1) == 1
+    assert await f(2) == 2
+    assert await f(3) == 3
+    assert mocked.call_count == 3
+    assert await f(1) == 1
+    assert await f(4) == 4
+    assert mocked.call_count == 4
+    assert await f(2) == 2
+    assert await f(3) == 3
+    assert mocked.call_count == 4
+
+
+@AsyncLRUCache(maxsize=3)
 async def f(n: int) -> int:
     print("f is called")
     return n
@@ -75,5 +69,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    print(f.__annotations__)
     asyncio.run(main())
