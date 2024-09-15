@@ -20,8 +20,8 @@ def cache[T, **P](func: typing.Callable[P, T]) -> typing.Callable[P, T]:
 
 class Cache[T, **P]:
     def __init__(self, func: typing.Callable[P, T]) -> None:
-        self._cache: dict[int, typing.Any] = {}
         self._func = func
+        self._cache: dict[int, typing.Any] = {}
         functools.update_wrapper(self, func)
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
