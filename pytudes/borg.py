@@ -1,5 +1,8 @@
+import typing
+
+
 class Borg:
-    __shared_state = {}
+    __shared_state: dict[str, typing.Any] = {}
 
     def __init__(self):
         self.__dict__ = self.__shared_state
