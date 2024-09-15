@@ -1,8 +1,8 @@
 import asyncio
-import collections
 import typing
 import functools
 from unittest import mock
+from . import lru_dict
 
 import pytest
 
@@ -15,20 +15,13 @@ def async_lru_cache[
     def decorator(
         func: typing.Callable[P, typing.Awaitable[T]]
     ) -> typing.Callable[P, typing.Awaitable[T]]:
-        cache: typing.OrderedDict[int, typing.Any] = collections.OrderedDict()
-
-        def update_cache(key: int, value: typing.Any) -> None:
-            cache[key] = value
-            cache.move_to_end(key, last=False)
-            if len(cache) > maxsize:
-                cache.popitem()
+        cache = lru_dict.LRUDict(maxsize)
 
         @functools.wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             key = hash((args, tuple(kwargs.items())))
             if key not in cache:
-                value = await func(*args, **kwargs)
-                update_cache(key, value)
+                cache[key] = await func(*args, **kwargs)
             return cache[key]
 
         return wrapper
@@ -45,20 +38,13 @@ class AsyncLRUCache:
     ](self, func: typing.Callable[P, typing.Awaitable[T]]) -> typing.Callable[
         P, typing.Awaitable[T]
     ]:
-        cache: typing.OrderedDict[int, typing.Any] = collections.OrderedDict()
-
-        def update_cache(key: int, value: typing.Any) -> None:
-            cache[key] = value
-            cache.move_to_end(key, last=False)
-            if len(cache) > self._maxsize:
-                cache.popitem()
+        cache = lru_dict.LRUDict(self._maxsize)
 
         @functools.wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             key = hash((args, tuple(kwargs.items())))
             if key not in cache:
-                value = await func(*args, **kwargs)
-                update_cache(key, value)
+                cache[key] = await func(*args, **kwargs)
             return cache[key]
 
         return wrapper
