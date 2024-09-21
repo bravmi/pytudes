@@ -46,11 +46,11 @@ def advance_counter(board: set[tuple[int, int]]) -> set[tuple[int, int]]:
 
 
 def test_compare():
-    glider = set([(0, 0), (1, 0), (2, 0), (0, 1), (1, 2)])
+    glider = {(0, 0), (1, 0), (2, 0), (0, 1), (1, 2)}
     for _ in range(1000):
         glider = advance(glider)
 
-    glider_counter = set([(0, 0), (1, 0), (2, 0), (0, 1), (1, 2)])
+    glider_counter = {(0, 0), (1, 0), (2, 0), (0, 1), (1, 2)}
     for _ in range(1000):
         glider_counter = advance_counter(glider_counter)
 
@@ -58,7 +58,7 @@ def test_compare():
 
 
 if __name__ == '__main__':
-    glider = set([(0, 0), (1, 0), (2, 0), (0, 1), (1, 2)])
+    glider = {(0, 0), (1, 0), (2, 0), (0, 1), (1, 2)}
     for _ in range(1000):
         glider = advance_counter(glider)
     print(glider)
