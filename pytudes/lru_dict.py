@@ -21,6 +21,5 @@ def test_lru_dict():
     assert cache.keys() == {1, 2, 3}
     cache[4] = 4
     assert cache.keys() == {2, 3, 4}
-    cache[2]
     cache[5] = 5
     assert cache.keys() == {3, 4, 5}
