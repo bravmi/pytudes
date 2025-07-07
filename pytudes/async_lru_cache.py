@@ -8,7 +8,7 @@ import pytest
 
 
 def async_lru_cache[
-    T, **P
+**P, T
 ](maxsize: int) -> typing.Callable[
     [typing.Callable[P, typing.Awaitable[T]]], typing.Callable[P, typing.Awaitable[T]]
 ]:
@@ -34,7 +34,7 @@ class AsyncLRUCache:
         self._maxsize = maxsize
 
     def __call__[
-        T, **P
+    **P, T
     ](self, func: typing.Callable[P, typing.Awaitable[T]]) -> typing.Callable[
         P, typing.Awaitable[T]
     ]:
